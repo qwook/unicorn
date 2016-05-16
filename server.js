@@ -7,10 +7,6 @@ const app = express();
 
 const port = 3000;
 
-app.get('/', (req, res) => {
-  res.sendFile( path.join(__dirname, 'app' , '.build', 'index.html') );
-});
-
 app.get('/third_party/require.js', (req, res) => {
   res.sendFile( path.join(__dirname, 'node_modules' , 'requirejs', 'require.js') );
 });
@@ -24,6 +20,10 @@ app.get('/bundle.js', (req, res) => {
 });
 
 app.use('/', express.static(path.join(__dirname, 'app' , '.build')));
+
+app.use('/', (req, res) => {
+  res.sendFile( path.join(__dirname, 'app' , '.build', 'index.html') );
+});
 
 app.listen(port);
 console.log("Server listening on " + port);
