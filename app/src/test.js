@@ -1,13 +1,4 @@
-console.log("lol");
 
-/*
-
-Unicorn
-.client(function() {
-
-})
-.server(function() {
-
+Router.route('/', function() {
+  Template.render('Homepage');
 });
-
-*/

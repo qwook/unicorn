@@ -19,6 +19,10 @@ app.get('/client.js', (req, res) => {
   res.sendFile( path.join(__dirname, 'client.js') );
 });
 
+app.get('/bundle.js', (req, res) => {
+  res.sendFile( path.join(__dirname, 'app' , '.build', 'bundle.js') );
+});
+
 app.use('/', express.static(path.join(__dirname, 'app' , '.build')));
 
 app.listen(port);

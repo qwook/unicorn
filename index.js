@@ -6,8 +6,10 @@ const doT = require('dot');
 
 const babel = require('babel-core');
 const gaze = require('gaze');
-const htmlparser = require('htmlparser');
 const tinylr = require('tiny-lr');
+
+// builders
+const HTMLBuilder = require('./builders/HTMLBuilder.js');
 
 doT.templateSettings = {
   evaluate:    /\<\%([\s\S]+?)\%\>/g,
@@ -83,6 +85,38 @@ class UnicornBuilder {
     this.watchFiles();
   }
 
+  finalize(file) {
+    file = file || "";
+
+    return this.writeBuildFile('index.html', indexTemplate.apply(this))
+    .then(() => {
+      var jsFileList = this.jsFiles.map((value) => { return '"' + value + '"'; }).join(',');
+      var templateFileList = this.templateFiles.map((value) => { return '"' + value + '"'; }).join(',');
+
+      return this.writeBuildFile('bundle.js',
+        'require([\'core/index.js\'], function() {' +
+          'require([' + templateFileList + '], function() {' +
+            'require([' + jsFileList + '], function() {' +
+              'console.log("Loaded!");' +
+              'Unicorn.loaded();' +
+            '})' +
+          '})' +
+        '})'
+      );
+    })
+    .then(() => {
+      console.log("Rebuilt App");
+      return server.start();
+    })
+    .then(() => {
+      console.log("Reloaded Clients");
+      server.livereload([file]);
+    })
+    .catch((err) => {
+      console.error(err.stack);
+    });
+  }
+
   build() {
 
     // build
@@ -93,16 +127,8 @@ class UnicornBuilder {
       return this.iterateDir(this.rootDir, "app")
     })
     .then(() => {
-      return this.writeBuildFile('index.html', indexTemplate.apply(this));
+      return this.finalize();
     })
-    .then(() => {
-      console.log("Done");
-      
-      server.start();
-    })
-    .catch((err) => {
-      console.error(err.stack);
-    });
 
   }
 
@@ -177,27 +203,27 @@ class UnicornBuilder {
         } else {
           // todo: allow plugins
           if (ext === ".html") {
-            var tempFn = doT.template(content);
-
-            var tempString =
-            "function hey(_scope) {" +
-            "return (" + tempFn.toString() + ").apply(_scope)" +
-            "}";
+            var compiled = HTMLBuilder(content);
 
             relativeFilename = this.changeExt(relativeFilename, '.html.js');
 
-            this.writeBuildFile(relativeFilename, tempString).then(resolve);
+            this.writeBuildFile(relativeFilename, compiled).then(resolve);
             this.templateFiles.push(relativeFilename);
           } else if (ext === ".js") {
 
             if (type == 'core') {
               var result = babel.transform(content, {
+                'filename': relativeFilename,
+                'moduleId': relativeFilename,
                 'sourceMap': true,
                 'plugins': ['transform-es2015-modules-amd', 'transform-es2015-classes', 'transform-es2015-arrow-functions', 'transform-es2015-block-scoped-functions', 'transform-es2015-block-scoping']
               });
 
-              this.writeBuildFile(relativeFilename, result.code).then(resolve);
-              this.writeBuildFile(relativeFilename + '.map', result.map);
+              var code = result.code;
+              code += '\n//# sourceMappingURL=/' + relativeFilename + '.map';
+
+              this.writeBuildFile(relativeFilename, code).then(resolve);
+              this.writeBuildFile(relativeFilename + '.map', JSON.stringify(result.map));
 
               if (this.coreFiles.indexOf(relativeFilename) == -1)
                 this.coreFiles.push(relativeFilename);
@@ -273,15 +299,7 @@ class UnicornBuilder {
         console.log(relativeFilename);
         _this.buildFile(relativeFilename, 'core')
         .then(() => {
-          return _this.writeBuildFile('index.html', indexTemplate.apply(_this));
-        })
-        .then(() => {
-          console.log("Rebuilt App");
-          return server.start();
-        })
-        .then(() => {
-          console.log("Reloaded Clients");
-          server.livereload([file]);
+          return _this.finalize(file);
         });
       });
 
@@ -290,15 +308,7 @@ class UnicornBuilder {
         console.log(relativeFilename);
         _this.buildFile(relativeFilename, 'core')
         .then(() => {
-          return _this.writeBuildFile('index.html', indexTemplate.apply(_this));
-        })
-        .then(() => {
-          console.log("Rebuilt App");
-          return server.start();
-        })
-        .then(() => {
-          console.log("Reloaded Clients");
-          server.livereload([file]);
+          return _this.finalize(file);
         });
       });
       
@@ -318,15 +328,7 @@ class UnicornBuilder {
         console.log(relativeFilename);
         _this.buildFile(relativeFilename, 'app')
         .then(() => {
-          return _this.writeBuildFile('index.html', indexTemplate.apply(_this));
-        })
-        .then(() => {
-          console.log("Rebuilt App");
-          return server.start();
-        })
-        .then(() => {
-          console.log("Reloaded Clients");
-          server.livereload([file]);
+          return _this.finalize(file);
         });
       });
 
@@ -335,15 +337,7 @@ class UnicornBuilder {
         console.log(relativeFilename);
         _this.buildFile(relativeFilename, 'app')
         .then(() => {
-          return _this.writeBuildFile('index.html', indexTemplate.apply(_this));
-        })
-        .then(() => {
-          console.log("Rebuilt App");
-          return server.start();
-        })
-        .then(() => {
-          console.log("Reloaded Clients");
-          server.livereload([file]);
+          return _this.finalize(file);
         });
       });
       
