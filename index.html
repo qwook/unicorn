@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+</head>
+<body>
+  <% for (var template of this.templatefiles) { %>
+    <script type="text/javascript" src=<%= template %>></script>
+  <% } %>
+  <% for (var jsfile of this.jsfiles) { %>
+    <script type="text/javascript" src=<%= jsfile %>></script>
+  <% } %>
+</body>
+</html>
