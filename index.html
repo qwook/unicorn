@@ -4,11 +4,15 @@
   <title></title>
 </head>
 <body>
-  <% for (var template of this.templatefiles) { %>
-    <script type="text/javascript" src=<%= template %>></script>
+  <script src="//localhost:35729/livereload.js"></script>
+  
+  <script data-main="client.js" type="text/javascript" src="third_party/require.js"></script>  
+
+  <% for (var templateFile of this.templateFiles) { %>
+    <script type="text/javascript" src="<%= templateFile %>"></script>
   <% } %>
-  <% for (var jsfile of this.jsfiles) { %>
-    <script type="text/javascript" src=<%= jsfile %>></script>
+  <% for (var jsFile of this.jsFiles) { %>
+    <script type="text/javascript" src="<%= jsFile %>"></script>
   <% } %>
 </body>
 </html>

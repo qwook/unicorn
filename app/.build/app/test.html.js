@@ -1,4 +1,4 @@
 function hey(_scope) {return (function anonymous(it
 /**/) {
-var out=''; if (this.dude) { out+='<template name="yo"> '+( this.test )+'</template>'; } return out;
+var out='<template name="yo">'; if (this.dude) { out+=' '+( this.test ); } out+='</template>';return out;
 }).apply(_scope)}
